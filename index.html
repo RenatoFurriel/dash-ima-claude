@@ -769,68 +769,6 @@ function normalizeFuncao(v) {
 }
 
 // ─────────────────────────────────────────────────
-// DEDUPLICATION
-// ─────────────────────────────────────────────────
-function deduplicateRows(rows) {
-  // Regra: se nome OU e-mail OU telefone coincidirem → duplicata → mantém o mais recente.
-  // Três índices separados apontam para a posição do registro no array de resultado.
-  const emailIdx = new Map();
-  const phoneIdx = new Map();
-  const nameIdx  = new Map();
-  const result   = [];
-  let dupCount   = 0;
-
-  const normEmail = e => (e || '').toLowerCase().trim();
-  const normPhone = p => (p || '').replace(/\D/g, ''); // só dígitos
-  const normName  = n => (n || '').toLowerCase().trim();
-
-  for (const row of rows) {
-    const e = normEmail(row.email);
-    const p = normPhone(row.whatsapp);
-    const n = normName(row.nome);
-
-    // Procura match em qualquer dos três índices
-    let matchIdx = -1;
-    if (e && emailIdx.has(e))                    matchIdx = emailIdx.get(e);
-    else if (p && p.length >= 8 && phoneIdx.has(p)) matchIdx = phoneIdx.get(p);
-    else if (n && n.length >= 5 && nameIdx.has(n))  matchIdx = nameIdx.get(n);
-
-    if (matchIdx !== -1) {
-      dupCount++;
-      const existing = result[matchIdx];
-      // Mantém o cadastro mais recente
-      if ((row.data || '') >= (existing.data || '')) {
-        // Remove índices antigos do registro substituído
-        const oe = normEmail(existing.email);
-        const op = normPhone(existing.whatsapp);
-        const on = normName(existing.nome);
-        if (oe && emailIdx.get(oe) === matchIdx) emailIdx.delete(oe);
-        if (op && phoneIdx.get(op) === matchIdx) phoneIdx.delete(op);
-        if (on && nameIdx.get(on)  === matchIdx) nameIdx.delete(on);
-        // Substitui no array e re-indexa com dados novos
-        result[matchIdx] = row;
-        if (e) emailIdx.set(e, matchIdx);
-        if (p && p.length >= 8) phoneIdx.set(p, matchIdx);
-        if (n && n.length >= 5) nameIdx.set(n, matchIdx);
-      }
-      // Se o existente é mais recente: descarta o novo, índices não mudam
-    } else {
-      const idx = result.length;
-      result.push(row);
-      if (e) emailIdx.set(e, idx);
-      if (p && p.length >= 8) phoneIdx.set(p, idx);
-      if (n && n.length >= 5) nameIdx.set(n, idx);
-    }
-  }
-
-  if (dupCount > 0) {
-    console.warn(`[Dedup] ${dupCount} duplicata(s) removida(s) — nome, e-mail ou telefone coincidentes.`);
-  }
-
-  return result;
-}
-
-// ─────────────────────────────────────────────────
 // DATA FETCHING
 // ─────────────────────────────────────────────────
 
@@ -860,7 +798,7 @@ async function fetchData() {
   }
 
   if (!rows.length) throw new Error('Parser retornou 0 linhas.');
-  return deduplicateRows(rows); // ← remove duplicatas antes de retornar
+  return rows;
 }
 
 async function refreshData() {
@@ -1243,7 +1181,7 @@ async function init() {
     setStatus('ok', `✓ ${allData.length} inscritos • Atualizado em ${new Date().toLocaleString('pt-BR')}`);
   } catch(e) {
     // Fallback para dados embutidos se a planilha estiver inacessível
-    allData = deduplicateRows(BAKED_DATA);
+    allData = BAKED_DATA;
     setStatus('ok', `✓ ${allData.length} inscritos (cache de ${BAKED_TIMESTAMP}) • Planilha inacessível agora`);
   }
   filteredData = allData;
