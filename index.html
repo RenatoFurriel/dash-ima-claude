@@ -480,6 +480,9 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
   <div class="kpi-grid" id="kpiGrid">
     <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Total de Inscritos</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub" id="kpi-total-sub"></div></div>
     <div class="kpi-card"><div class="kpi-icon">📺</div><div class="kpi-label">Participarão ao Vivo</div><div class="kpi-value" id="kpi-live">—</div><div class="kpi-sub" id="kpi-live-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-icon">🗂️</div><div class="kpi-label">Organizando Agenda</div><div class="kpi-value" id="kpi-org">—</div><div class="kpi-sub" id="kpi-org-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-icon">🤔</div><div class="kpi-label">Talvez Participem</div><div class="kpi-value" id="kpi-talvez">—</div><div class="kpi-sub" id="kpi-talvez-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-icon">❓</div><div class="kpi-label">Não Sabem Ainda</div><div class="kpi-value" id="kpi-nao-sabe">—</div><div class="kpi-sub" id="kpi-nao-sabe-sub"></div></div>
     <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-label">Renda Média</div><div class="kpi-value" id="kpi-renda">—</div><div class="kpi-sub" id="kpi-renda-sub"></div></div>
   </div>
 
@@ -1012,8 +1015,11 @@ function rendaToNum(renda) {
 }
 
 function renderKPIs(data) {
-  const total = data.length;
-  const live  = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('estarei ao vivo')).length;
+  const total   = data.length;
+  const live    = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('estarei ao vivo')).length;
+  const org     = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('organizar')).length;
+  const talvez  = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('talvez')).length;
+  const naoSabe = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('não sei')).length;
 
   // Renda Média
   const rendaNums = data.map(r => rendaToNum(r.renda)).filter(v => v !== null);
@@ -1024,11 +1030,17 @@ function renderKPIs(data) {
     ? 'R$ ' + avgRenda.toLocaleString('pt-BR')
     : '—';
 
-  setText('kpi-total', total || '—');
+  setText('kpi-total',    total || '—');
   setText('kpi-total-sub', total ? `inscritos no total` : '');
-  setText('kpi-live', live || '—');
+  setText('kpi-live',    live || '—');
   setText('kpi-live-sub', total ? `${Math.round(live/total*100)}% do total` : '');
-  setText('kpi-renda', avgRendaStr);
+  setText('kpi-org',     org || '—');
+  setText('kpi-org-sub', total ? `${Math.round(org/total*100)}% do total` : '');
+  setText('kpi-talvez',  talvez || '—');
+  setText('kpi-talvez-sub', total ? `${Math.round(talvez/total*100)}% do total` : '');
+  setText('kpi-nao-sabe',  naoSabe || '—');
+  setText('kpi-nao-sabe-sub', total ? `${Math.round(naoSabe/total*100)}% do total` : '');
+  setText('kpi-renda',   avgRendaStr);
   setText('kpi-renda-sub', rendaNums.length ? `${rendaNums.length} respostas computadas` : '');
 }
 
