@@ -480,10 +480,7 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
   <div class="kpi-grid" id="kpiGrid">
     <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Total de Inscritos</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub" id="kpi-total-sub"></div></div>
     <div class="kpi-card"><div class="kpi-icon">📺</div><div class="kpi-label">Participarão ao Vivo</div><div class="kpi-value" id="kpi-live">—</div><div class="kpi-sub" id="kpi-live-sub"></div></div>
-    <div class="kpi-card"><div class="kpi-icon">⭐</div><div class="kpi-label">Score Médio</div><div class="kpi-value" id="kpi-score">—</div><div class="kpi-sub" id="kpi-score-sub">de 20 pts possíveis</div></div>
-    <div class="kpi-card"><div class="kpi-icon">🎯</div><div class="kpi-label">Com Exp. em GRC</div><div class="kpi-value" id="kpi-exp">—</div><div class="kpi-sub" id="kpi-exp-sub"></div></div>
-    <div class="kpi-card"><div class="kpi-icon">🚀</div><div class="kpi-label">Score Médio PRO</div><div class="kpi-value" id="kpi-score-pro">—</div><div class="kpi-sub">de 18 pts possíveis</div></div>
-    <div class="kpi-card"><div class="kpi-icon">🌱</div><div class="kpi-label">Score Médio START</div><div class="kpi-value" id="kpi-score-start">—</div><div class="kpi-sub">de 18 pts possíveis</div></div>
+    <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-label">Renda Média</div><div class="kpi-value" id="kpi-renda">—</div><div class="kpi-sub" id="kpi-renda-sub"></div></div>
   </div>
 
   <!-- Filters -->
@@ -1023,23 +1020,36 @@ function renderAll(data) {
 // ─────────────────────────────────────────────────
 // KPIs
 // ─────────────────────────────────────────────────
+function rendaToNum(renda) {
+  if (!renda) return null;
+  if (renda.includes('Acima de 25K')) return 27500;
+  if (renda.includes('20K a 25K'))    return 22500;
+  if (renda.includes('15K a 20K'))    return 17500;
+  if (renda.includes('10K a 15K'))    return 12500;
+  if (renda.includes('5K a 10K'))     return 7500;
+  if (renda.includes('Menos') || renda.includes('menos') || renda.includes('até 5') || renda.includes('Até 5')) return 2500;
+  return null;
+}
+
 function renderKPIs(data) {
   const total = data.length;
   const live  = data.filter(r => r.participacao && r.participacao.toLowerCase().includes('estarei ao vivo')).length;
-  const expYes = data.filter(r => r.expGRC && r.expGRC.includes('Sim, tenho')).length;
-  const avgScore      = total ? (data.reduce((s,r) => s+r.score,      0) / total).toFixed(1) : '—';
-  const avgScorePRO   = total ? (data.reduce((s,r) => s+r.scorePRO,   0) / total).toFixed(1) : '—';
-  const avgScoreSTART = total ? (data.reduce((s,r) => s+r.scoreSTART, 0) / total).toFixed(1) : '—';
+
+  // Renda Média
+  const rendaNums = data.map(r => rendaToNum(r.renda)).filter(v => v !== null);
+  const avgRenda  = rendaNums.length
+    ? Math.round(rendaNums.reduce((s, v) => s + v, 0) / rendaNums.length)
+    : null;
+  const avgRendaStr = avgRenda
+    ? 'R$ ' + avgRenda.toLocaleString('pt-BR')
+    : '—';
 
   setText('kpi-total', total || '—');
   setText('kpi-total-sub', total ? `inscritos no total` : '');
   setText('kpi-live', live || '—');
   setText('kpi-live-sub', total ? `${Math.round(live/total*100)}% do total` : '');
-  setText('kpi-score', avgScore);
-  setText('kpi-exp', total ? Math.round(expYes/total*100)+'%' : '—');
-  setText('kpi-exp-sub', total ? `${expYes} de ${total} inscritos` : '');
-  setText('kpi-score-pro',   avgScorePRO);
-  setText('kpi-score-start', avgScoreSTART);
+  setText('kpi-renda', avgRendaStr);
+  setText('kpi-renda-sub', rendaNums.length ? `${rendaNums.length} respostas computadas` : '');
 }
 
 // ─────────────────────────────────────────────────
